@@ -21,7 +21,8 @@ app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
                                                         "static")), name="static")
 
 # Email validation regex for Mergington High School
-EMAIL_PATTERN = r'^[a-zA-Z0-9._%+-]+@mergington\.edu$'
+# Restricting to alphanumeric, dots, hyphens, and underscores for security
+EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._-]+@mergington\.edu$')
 
 
 def validate_email(email: str) -> None:
@@ -34,7 +35,7 @@ def validate_email(email: str) -> None:
     Raises:
         HTTPException: If the email is invalid or not from mergington.edu domain
     """
-    if not email or not re.match(EMAIL_PATTERN, email):
+    if not email or not EMAIL_REGEX.match(email):
         raise HTTPException(status_code=400, detail="Invalid email address")
 
 # In-memory activity database
