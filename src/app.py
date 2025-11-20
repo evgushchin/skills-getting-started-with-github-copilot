@@ -20,6 +20,23 @@ current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
                                                         "static")), name="static")
 
+# Email validation regex for Mergington High School
+EMAIL_PATTERN = r'^[a-zA-Z0-9._%+-]+@mergington\.edu$'
+
+
+def validate_email(email: str) -> None:
+    """
+    Validate that the email is a valid Mergington High School email address.
+    
+    Args:
+        email: The email address to validate
+        
+    Raises:
+        HTTPException: If the email is invalid or not from mergington.edu domain
+    """
+    if not email or not re.match(EMAIL_PATTERN, email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
+
 # In-memory activity database
 activities = {
     "Chess Club": {
@@ -96,8 +113,7 @@ def get_activities():
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
     # Validate email format
-    if not email or not re.match(r'^[a-zA-Z0-9._%+-]+@mergington\.edu$', email):
-        raise HTTPException(status_code=400, detail="Invalid email address")
+    validate_email(email)
     
     # Validate activity exists
     if activity_name not in activities:
@@ -118,8 +134,7 @@ def signup_for_activity(activity_name: str, email: str):
 def unregister_from_activity(activity_name: str, email: str):
     """Remove a student from an activity"""
     # Validate email format
-    if not email or not re.match(r'^[a-zA-Z0-9._%+-]+@mergington\.edu$', email):
-        raise HTTPException(status_code=400, detail="Invalid email address")
+    validate_email(email)
     
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
