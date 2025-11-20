@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 import os
 from pathlib import Path
+import re
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -18,6 +19,24 @@ app = FastAPI(title="Mergington High School API",
 current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
                                                         "static")), name="static")
+
+# Email validation regex for Mergington High School
+# Restricting to alphanumeric, dots, hyphens, and underscores for security
+EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._-]+@mergington\.edu$')
+
+
+def validate_email(email: str) -> None:
+    """
+    Validate that the email is a valid Mergington High School email address.
+    
+    Args:
+        email: The email address to validate
+        
+    Raises:
+        HTTPException: If the email is invalid or not from mergington.edu domain
+    """
+    if not email or not EMAIL_REGEX.match(email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
 
 # In-memory activity database
 activities = {
@@ -94,6 +113,9 @@ def get_activities():
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
+    # Validate email format
+    validate_email(email)
+    
     # Validate activity exists
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
@@ -112,6 +134,9 @@ def signup_for_activity(activity_name: str, email: str):
 @app.delete("/activities/{activity_name}/unregister")
 def unregister_from_activity(activity_name: str, email: str):
     """Remove a student from an activity"""
+    # Validate email format
+    validate_email(email)
+    
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
     activity = activities[activity_name]
